@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoFixture.Xunit2;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using TestingControllersSample.Api;
@@ -215,25 +216,17 @@ namespace TestingControllersSample.Tests.UnitTests
         #endregion
 
         #region snippet_CreateActionResult_ReturnsNewlyCreatedIdeaForSession
-        [Fact]
-        public async Task CreateActionResult_ReturnsNewlyCreatedIdeaForSession()
+        [Theory]
+		[AutoData]
+        public async Task CreateActionResult_ReturnsNewlyCreatedIdeaForSession(NewIdeaModel newIdea)
         {
             // Arrange
-            int testSessionId = 123;
-            string testName = "test name";
-            string testDescription = "test description";
             var testSession = GetTestSession();
             var mockRepo = new Mock<IBrainstormSessionRepository>();
-            mockRepo.Setup(repo => repo.GetByIdAsync(testSessionId))
+            mockRepo.Setup(repo => repo.GetByIdAsync(newIdea.SessionId))
                 .ReturnsAsync(testSession);
             var controller = new IdeasController(mockRepo.Object);
 
-            var newIdea = new NewIdeaModel()
-            {
-                Description = testDescription,
-                Name = testName,
-                SessionId = testSessionId
-            };
             mockRepo.Setup(repo => repo.UpdateAsync(testSession))
                 .Returns(Task.CompletedTask)
                 .Verifiable();
@@ -247,8 +240,8 @@ namespace TestingControllersSample.Tests.UnitTests
             var returnValue = Assert.IsType<BrainstormSession>(createdAtActionResult.Value);
             mockRepo.Verify();
             Assert.Equal(2, returnValue.Ideas.Count());
-            Assert.Equal(testName, returnValue.Ideas.LastOrDefault().Name);
-            Assert.Equal(testDescription, returnValue.Ideas.LastOrDefault().Description);
+            Assert.Equal(newIdea.Name, returnValue.Ideas.LastOrDefault().Name);
+            Assert.Equal(newIdea.Description, returnValue.Ideas.LastOrDefault().Description);
         }
         #endregion
 
