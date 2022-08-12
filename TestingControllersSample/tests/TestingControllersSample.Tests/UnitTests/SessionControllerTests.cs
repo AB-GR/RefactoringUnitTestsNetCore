@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoFixture.Xunit2;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using TestingControllersSample.Controllers;
@@ -15,12 +17,10 @@ namespace TestingControllersSample.Tests.UnitTests
     public class SessionControllerTests
     {
         #region snippet_SessionControllerTests
-        [Fact]
-        public async Task IndexReturnsARedirectToIndexHomeWhenIdIsNull()
+        [Theory]
+        [AutoDomainData]
+        public async Task IndexReturnsARedirectToIndexHomeWhenIdIsNull([Greedy] SessionController controller)
         {
-            // Arrange
-            var controller = new SessionController(sessionRepository: null);
-
             // Act
             var result = await controller.Index(id: null);
 
@@ -31,15 +31,15 @@ namespace TestingControllersSample.Tests.UnitTests
             Assert.Equal("Index", redirectToActionResult.ActionName);
         }
 
-        [Fact]
-        public async Task IndexReturnsContentWithSessionNotFoundWhenSessionNotFound()
+        [Theory]
+        [AutoDomainData]
+        public async Task IndexReturnsContentWithSessionNotFoundWhenSessionNotFound([Frozen] Mock<IBrainstormSessionRepository> mockRepo,
+            [Greedy] SessionController controller)
         {
             // Arrange
             int testSessionId = 1;
-            var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.GetByIdAsync(testSessionId))
                 .ReturnsAsync((BrainstormSession)null);
-            var controller = new SessionController(mockRepo.Object);
 
             // Act
             var result = await controller.Index(testSessionId);
@@ -49,16 +49,20 @@ namespace TestingControllersSample.Tests.UnitTests
             Assert.Equal("Session not found.", contentResult.Content);
         }
 
-        [Fact]
-        public async Task IndexReturnsViewResultWithStormSessionViewModel()
+		[Theory]
+        [AutoDomainData]
+        public async Task IndexReturnsViewResultWithStormSessionViewModel(List<BrainstormSession> brainstormSessions, 
+            [Frozen]Mock<IBrainstormSessionRepository> mockRepo,
+            [Greedy] SessionController controller)
         {
             // Arrange
-            int testSessionId = 1;
-            var mockRepo = new Mock<IBrainstormSessionRepository>();
+            brainstormSessions[0].Id = 1; 
+            brainstormSessions[0].Name = "Test One";
+            brainstormSessions[0].DateCreated = DateTime.ParseExact("2022-08-02", "yyyy-MM-dd", null, DateTimeStyles.None);
+
+            int testSessionId = brainstormSessions[0].Id;
             mockRepo.Setup(repo => repo.GetByIdAsync(testSessionId))
-                .ReturnsAsync(GetTestSessions().FirstOrDefault(
-                    s => s.Id == testSessionId));
-            var controller = new SessionController(mockRepo.Object);
+                .ReturnsAsync(brainstormSessions.FirstOrDefault(s => s.Id == testSessionId));
 
             // Act
             var result = await controller.Index(testSessionId);
@@ -72,23 +76,5 @@ namespace TestingControllersSample.Tests.UnitTests
             Assert.Equal(testSessionId, model.Id);
         }
         #endregion
-
-        private List<BrainstormSession> GetTestSessions()
-        {
-            var sessions = new List<BrainstormSession>();
-            sessions.Add(new BrainstormSession()
-            {
-                DateCreated = new DateTime(2016, 7, 2),
-                Id = 1,
-                Name = "Test One"
-            });
-            sessions.Add(new BrainstormSession()
-            {
-                DateCreated = new DateTime(2016, 7, 1),
-                Id = 2,
-                Name = "Test Two"
-            });
-            return sessions;
-        }
     }
 }
