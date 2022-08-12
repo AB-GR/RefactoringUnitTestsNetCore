@@ -50,7 +50,7 @@ namespace TestingControllersSample.Tests.UnitTests
             mockRepo.Setup(repo => repo.ListAsync())
                 .ReturnsAsync(brainstormSessions);
 
-            controller.ModelState.AddModelError("SessionName", "Required");
+            controller.ModelState.AddModelError(nameof(HomeController.NewSessionModel.SessionName), "Required");
             var newSession = new HomeController.NewSessionModel();
 
             // Act
