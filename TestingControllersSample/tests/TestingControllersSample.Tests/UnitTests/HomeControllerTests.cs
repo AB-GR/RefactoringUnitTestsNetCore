@@ -15,13 +15,14 @@ namespace TestingControllersSample.Tests.UnitTests
     public class HomeControllerTests
     {
         #region snippet_Index_ReturnsAViewResult_WithAListOfBrainstormSessions
-        [Fact]
-        public async Task Index_ReturnsAViewResult_WithAListOfBrainstormSessions()
+        [Theory]
+		[AutoDomainData]
+        public async Task Index_ReturnsAViewResult_WithAListOfBrainstormSessions([CollectionSize(2)]List<BrainstormSession> brainstormSessions)
         {
             // Arrange
             var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.ListAsync())
-                .ReturnsAsync(GetTestSessions());
+                .ReturnsAsync(brainstormSessions);
             var controller = new HomeController(mockRepo.Object);
 
             // Act
@@ -36,13 +37,14 @@ namespace TestingControllersSample.Tests.UnitTests
         #endregion
 
         #region snippet_ModelState_ValidOrInvalid
-        [Fact]
-        public async Task IndexPost_ReturnsBadRequestResult_WhenModelStateIsInvalid()
+        [Theory]
+		[AutoDomainData]
+        public async Task IndexPost_ReturnsBadRequestResult_WhenModelStateIsInvalid(List<BrainstormSession> brainstormSessions)
         {
             // Arrange
             var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.ListAsync())
-                .ReturnsAsync(GetTestSessions());
+                .ReturnsAsync(brainstormSessions);
             var controller = new HomeController(mockRepo.Object);
             controller.ModelState.AddModelError("SessionName", "Required");
             var newSession = new HomeController.NewSessionModel();
@@ -77,26 +79,6 @@ namespace TestingControllersSample.Tests.UnitTests
             Assert.Null(redirectToActionResult.ControllerName);
             Assert.Equal("Index", redirectToActionResult.ActionName);
             mockRepo.Verify();
-        }
-        #endregion
-
-        #region snippet_GetTestSessions
-        private List<BrainstormSession> GetTestSessions()
-        {
-            var sessions = new List<BrainstormSession>();
-            sessions.Add(new BrainstormSession()
-            {
-                DateCreated = new DateTime(2016, 7, 2),
-                Id = 1,
-                Name = "Test One"
-            });
-            sessions.Add(new BrainstormSession()
-            {
-                DateCreated = new DateTime(2016, 7, 1),
-                Id = 2,
-                Name = "Test Two"
-            });
-            return sessions;
         }
         #endregion
     }

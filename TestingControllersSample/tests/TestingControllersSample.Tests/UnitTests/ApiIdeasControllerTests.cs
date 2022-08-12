@@ -53,7 +53,7 @@ namespace TestingControllersSample.Tests.UnitTests
 
         #region snippet_ApiIdeasControllerTests3
         [Theory]
-		[AutoDomainDataAttribute]
+		[AutoDomainData]
         public async Task Create_ReturnsNewlyCreatedIdeaForSession(NewIdeaModel newIdea, BrainstormSession testSession)
         {
             // Arrange
@@ -200,7 +200,7 @@ namespace TestingControllersSample.Tests.UnitTests
 
         #region snippet_CreateActionResult_ReturnsNewlyCreatedIdeaForSession
         [Theory]
-		[AutoDomainDataAttribute]
+		[AutoDomainData]
         public async Task CreateActionResult_ReturnsNewlyCreatedIdeaForSession(NewIdeaModel newIdea, BrainstormSession testSession)
         {
             // Arrange
