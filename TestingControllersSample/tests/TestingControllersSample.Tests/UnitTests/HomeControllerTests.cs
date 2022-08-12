@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoFixture.Xunit2;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using TestingControllersSample.Controllers;
@@ -17,13 +18,14 @@ namespace TestingControllersSample.Tests.UnitTests
         #region snippet_Index_ReturnsAViewResult_WithAListOfBrainstormSessions
         [Theory]
 		[AutoDomainData]
-        public async Task Index_ReturnsAViewResult_WithAListOfBrainstormSessions([CollectionSize(2)]List<BrainstormSession> brainstormSessions)
+        public async Task Index_ReturnsAViewResult_WithAListOfBrainstormSessions(
+            [CollectionSize(2)]List<BrainstormSession> brainstormSessions,
+			[Frozen] Mock<IBrainstormSessionRepository> mockRepo,
+            [Greedy]HomeController controller)
         {
             // Arrange
-            var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.ListAsync())
                 .ReturnsAsync(brainstormSessions);
-            var controller = new HomeController(mockRepo.Object);
 
             // Act
             var result = await controller.Index();
@@ -39,13 +41,15 @@ namespace TestingControllersSample.Tests.UnitTests
         #region snippet_ModelState_ValidOrInvalid
         [Theory]
 		[AutoDomainData]
-        public async Task IndexPost_ReturnsBadRequestResult_WhenModelStateIsInvalid(List<BrainstormSession> brainstormSessions)
+        public async Task IndexPost_ReturnsBadRequestResult_WhenModelStateIsInvalid(
+            List<BrainstormSession> brainstormSessions,
+            [Frozen] Mock<IBrainstormSessionRepository> mockRepo,
+            [Greedy] HomeController controller)
         {
             // Arrange
-            var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.ListAsync())
                 .ReturnsAsync(brainstormSessions);
-            var controller = new HomeController(mockRepo.Object);
+
             controller.ModelState.AddModelError("SessionName", "Required");
             var newSession = new HomeController.NewSessionModel();
 
@@ -57,15 +61,17 @@ namespace TestingControllersSample.Tests.UnitTests
             Assert.IsType<SerializableError>(badRequestResult.Value);
         }
 
-        [Fact]
-        public async Task IndexPost_ReturnsARedirectAndAddsSession_WhenModelStateIsValid()
+        [Theory]
+		[AutoDomainData]
+        public async Task IndexPost_ReturnsARedirectAndAddsSession_WhenModelStateIsValid(
+            [Frozen] Mock<IBrainstormSessionRepository> mockRepo,
+            [Greedy] HomeController controller)
         {
             // Arrange
-            var mockRepo = new Mock<IBrainstormSessionRepository>();
             mockRepo.Setup(repo => repo.AddAsync(It.IsAny<BrainstormSession>()))
                 .Returns(Task.CompletedTask)
                 .Verifiable();
-            var controller = new HomeController(mockRepo.Object);
+
             var newSession = new HomeController.NewSessionModel()
             {
                 SessionName = "Test Name"
